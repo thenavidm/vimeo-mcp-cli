@@ -9,9 +9,72 @@ description: |
   plays or video performance. Use it too when a Vimeo call fails with a
   permission error, a 404 that makes no sense, or a delete that will not run:
   those have specific causes documented here and guessing at them wastes turns.
+argument-hint: <command> [args] | install cli|mcp
+allowed-tools: Read, Bash
+metadata:
+  requires:
+    bins: [vimeo-cli]
+  install:
+    kind: npm
+    package: "@thenavidm/vimeo-mcp-cli"
+    bins: [vimeo-cli, vimeo-mcp]
 ---
 
 # Driving the Vimeo tools
+
+
+## Before you run anything
+
+If the MCP server is connected, use the tools and ignore this section.
+
+Otherwise this skill drives the `vimeo-cli` binary, and you must confirm it is
+there first:
+
+```bash
+vimeo-cli --version
+```
+
+If that fails:
+
+```bash
+npm i -g @thenavidm/vimeo-mcp-cli
+```
+
+If `--version` still reports command not found, the install directory is not on
+`$PATH` for this runtime. **Stop.** Do not run skill commands until it answers.
+
+## Finding a command
+
+The CLI describes itself, so nothing here lists every tool and goes stale:
+
+```bash
+vimeo-cli                    # every command, one line each
+vimeo-cli <command> --help   # arguments, types, which are required
+vimeo-cli schema <command>   # the exact JSON Schema an MCP client receives
+```
+
+The command is the tool name with dashes, and the underscore spelling also
+works. `--agent` is JSON, compact, no prompts and no colour in one flag, and
+`--select a,b.c` keeps only the fields you name.
+
+```bash
+vimeo-cli get-me --agent
+vimeo-cli search-videos --query webinar --agent
+```
+
+## Exit codes
+
+| Code | Meaning |
+|---|---|
+| 0 | Success |
+| 2 | Usage: a missing or wrong argument, an unknown command, or a write refused for want of `--confirm` |
+| 3 | Not found |
+| 4 | Authentication: a credential was rejected or has expired |
+| 5 | Upstream failure |
+| 7 | Rate limited, wait and retry |
+| 10 | Nothing configured yet |
+
+Branch on these rather than reading the message.
 
 ## Open with get_me
 
@@ -143,3 +206,17 @@ those, say they are not available here and point at Vimeo's own connector.
 
 Do not substitute play counts for retention, or a transcript scan for moment
 search. A confident wrong answer costs more than a short one.
+
+## Arguments
+
+1. Empty, `help` or `--help` → run `vimeo-cli` and show the commands.
+2. `install mcp` → the block below. `install cli` → the top of this file.
+3. Anything else → run it as a command with `--agent`.
+
+## Installing the MCP server instead
+
+```bash
+claude mcp add vimeo -e VIMEO_PAT=... -- npx -y @thenavidm/vimeo-mcp-cli
+```
+
+Verify with `claude mcp list`. Every other client is in the README.

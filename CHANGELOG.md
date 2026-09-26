@@ -7,6 +7,14 @@
 | Node | >= 20 | 2026-09-01 |
 | Vimeo API | 3.4 | 2026-09-01 |
 
+## 1.1.0
+
+**A CLI.** `vimeo-cli` runs every tool as a shell command. It builds the same server the MCP binary runs and calls it through the SDK's in-memory transport, so the two surfaces cannot drift. Exit codes follow the house contract: 2 usage or a refused write, 3 not found, 4 a rejected token or a missing scope, 5 API, 7 rate limited, 10 no token.
+
+**Renamed to vimeo-mcp-cli**, the name every server with a CLI carries. The old package is deprecated with a pointer here, and GitHub redirects the old repo address.
+
+**A Claude Desktop extension**, attached to each release, asking for the token.
+
 ## 1.0.3
 
 Finishes the American English pass. The previous commit changed five words and

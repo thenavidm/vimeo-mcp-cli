@@ -1,11 +1,12 @@
 {
-  "name": "@thenavidm/vimeo-mcp",
-  "version": "1.0.3",
-  "description": "Vimeo MCP server for Claude Code and AI agents. 43 tools for videos, folders, showcases, chapters, captions, transcripts, comments, tags, privacy, embed presets, and bulk library operations.",
+  "name": "@thenavidm/vimeo-mcp-cli",
+  "version": "1.1.0",
+  "description": "Vimeo MCP server and CLI for Claude Code, Codex and AI agents. 43 tools for transcripts, bulk folder filing, showcases, chapters, captions, tags, privacy and embed presets.",
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
-    "vimeo-mcp": "dist/index.js"
+    "vimeo-mcp": "dist/index.js",
+    "vimeo-cli": "dist/index.js"
   },
   "engines": {
     "node": ">=20"
@@ -33,10 +34,10 @@
   "homepage": "https://navid.me",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/thenavidm/vimeo-mcp.git"
+    "url": "git+https://github.com/thenavidm/vimeo-mcp-cli.git"
   },
   "bugs": {
-    "url": "https://github.com/thenavidm/vimeo-mcp/issues"
+    "url": "https://github.com/thenavidm/vimeo-mcp-cli/issues"
   },
   "keywords": [
     "mcp",
@@ -48,7 +49,9 @@
     "claude",
     "claude-code",
     "ai-agents",
-    "llm-tools"
+    "llm-tools",
+    "cli",
+    "command-line-tool"
   ],
   "files": [
     "dist",

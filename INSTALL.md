@@ -35,7 +35,7 @@ area, a personal access token with the scopes ticked.
 ## Check it
 
 ```bash
-VIMEO_PAT=your_token npx -y @thenavidm/vimeo-mcp@latest doctor
+VIMEO_PAT=your_token npx -y @thenavidm/vimeo-mcp-cli@latest doctor
 ```
 
 It prints every scope the token holds and names any tool a missing scope

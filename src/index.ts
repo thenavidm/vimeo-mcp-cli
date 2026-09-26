@@ -9,6 +9,13 @@
 
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { buildServer, VERSION } from "./server.js";
+import { isCliCommand, runCli, toolNames } from "./cli.js";
+
+/** Invoked as the CLI binary rather than the server one. */
+function invokedAsCli(): boolean {
+  const name = (process.argv[1] ?? "").split("/").pop() ?? "";
+  return name.startsWith("vimeo-cli");
+}
 import { loadConfig } from "./config.js";
 import { httpOptionsFromEnv, startHttpServer } from "./transport/http.js";
 
@@ -35,12 +42,23 @@ Options:
   VIMEO_API_VERSION               Vimeo API version, default 3.4
   VIMEO_HTTP_PORT / _HOST / _TOKEN  for --http
 
-https://github.com/thenavidm/vimeo-mcp
+https://github.com/thenavidm/vimeo-mcp-cli
 `;
 
 async function main(): Promise<void> {
   const argv = process.argv.slice(2);
   const command = argv[0];
+
+  // The CLI: every tool as a command, from the same server an MCP app talks
+  // to. Checked first so `<tool> --help` reaches the tool.
+  const cli =
+    command !== undefined && !command.startsWith("-") && command !== "doctor" && command !== "help"
+      ? invokedAsCli() || isCliCommand(argv, await toolNames())
+      : invokedAsCli() && argv.length === 0;
+  if (cli) {
+    process.exitCode = await runCli(argv.length ? argv : ["tools"]);
+    return;
+  }
 
   if (argv.includes("--help") || argv.includes("-h") || command === "help") {
     process.stdout.write(HELP);

@@ -1,13 +1,17 @@
 <img src="https://cdn.navid.media/connectors/vimeo-icon.png" alt="Vimeo" width="88">
 
-# Vimeo MCP
+# Vimeo MCP Server & CLI
 
 [![License](https://img.shields.io/badge/License-MIT-blue)](./LICENSE)
-[![npm](https://img.shields.io/npm/v/@thenavidm/vimeo-mcp?color=orange&label=npm)](https://www.npmjs.com/package/@thenavidm/vimeo-mcp)
-[![CI](https://img.shields.io/github/actions/workflow/status/thenavidm/vimeo-mcp/ci.yml?branch=main&label=CI)](https://github.com/thenavidm/vimeo-mcp/actions)
+[![npm](https://img.shields.io/npm/v/@thenavidm/vimeo-mcp-cli?color=orange&label=npm)](https://www.npmjs.com/package/@thenavidm/vimeo-mcp-cli)
+[![CI](https://img.shields.io/github/actions/workflow/status/thenavidm/vimeo-mcp-cli/ci.yml?branch=main&label=CI)](https://github.com/thenavidm/vimeo-mcp-cli/actions)
 [![YouTube](https://img.shields.io/badge/YouTube-@thenavidm-red?logo=youtube&logoColor=white)](https://youtube.com/@thenavidm?sub_confirmation=1)
 [![X](https://img.shields.io/badge/X-@thenavidm-black?logo=x)](https://x.com/thenavidm)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-thenavidm-0A66C2?logo=linkedin&logoColor=white)](https://linkedin.com/in/thenavidm)
+
+Vimeo MCP server and CLI for Claude Code, Codex and AI agents. 43 tools for transcripts, bulk folder filing, showcases, chapters, captions, tags, privacy and embed presets.
+
+One install gives you both surfaces, the same 43 tools under the same names, from the same server, so they cannot drift apart.
 
 Vimeo MCP connects your video library to Claude, Cursor, and any other AI agent.
 It reads transcripts, files videos into folders in bulk, curates showcases,
@@ -17,9 +21,42 @@ There are 43 tools, and the bulk folder operations are the point of them. Vimeo
 moves videos between folders one at a time, so refiling a back catalog of
 hundreds is hundreds of drags. Here it is one call that takes up to 100 videos.
 
-Built by [Navid Moazzez](https://navid.me?utm_source=github&utm_medium=referral&utm_campaign=vimeo-mcp&utm_content=readme).
+Built by [Navid Moazzez](https://navid.me?utm_source=github&utm_medium=referral&utm_campaign=vimeo-mcp-cli&utm_content=readme).
 
 <img src="https://cdn.navid.media/repos/vimeo-mcp.gif?v=1" alt="Claude Code using the Vimeo MCP server" width="520">
+
+## Two ways to use it
+
+### Command line
+
+`vimeo-cli` runs every tool as a command. Agents that run commands, like
+Claude Code, Codex and OpenCode, use it on their own, and you can type the same
+commands in a terminal, a script or a cron job:
+
+```bash
+vimeo-cli                                          # every command, one line each
+vimeo-cli get-me                                   # which account and plan the token reaches
+vimeo-cli search-videos --query "webinar"
+vimeo-cli get-video --video-id 123456789 --json
+vimeo-cli <command> --help                         # what any command takes
+```
+
+`--confirm` is the shell spelling of the confirmation deleting needs. `--json` gives JSON, `--compact` puts it on one line, `--select` keeps only the fields you name, and `--agent` turns on all of it for a script. Exit codes are 0 ok, 2 usage or a refused write, 3 not found, 4 a rejected token or a missing scope, 5 API, 7 rate limited and 10 no token, so a script branches on the number.
+
+`vimeo-cli schema <command>` prints the exact JSON Schema an MCP client
+receives for that tool.
+
+### MCP server, for AI agents
+
+`vimeo-mcp` is what Claude Code, Claude Desktop, Cursor and the rest launch.
+You never run it by hand:
+
+```bash
+claude mcp add vimeo -e VIMEO_PAT=your-token -- npx -y @thenavidm/vimeo-mcp-cli
+```
+
+In Claude Desktop, the [`.mcpb` extension](https://github.com/thenavidm/vimeo-mcp-cli/releases/latest)
+installs on a double click. Section 4 has every other client.
 
 ## Contents
 
@@ -62,11 +99,18 @@ library of hundreds of videos is one request rather than hundreds of drags.
 You need Node 20 or newer, and nothing else.
 
 ```bash
-npx -y @thenavidm/vimeo-mcp --version
+npx -y @thenavidm/vimeo-mcp-cli --version
 ```
 
 That is the whole install. `npx` fetches it on demand, so there is nothing to
 update later.
+
+For the CLI as a command you or your agent can run anywhere, install it once:
+
+```bash
+npm install -g @thenavidm/vimeo-mcp-cli
+vimeo-cli
+```
 
 ## 3. Setup 🔑
 
@@ -123,12 +167,18 @@ The long version, every step with what to do when one fails, is in [INSTALL.md](
 ```bash
 claude mcp add vimeo \
   -e VIMEO_PAT=your_token_here \
-  -- npx -y @thenavidm/vimeo-mcp@latest
+  -- npx -y @thenavidm/vimeo-mcp-cli@latest
 ```
 
 Add `--scope user` to make it available in every project rather than just this one.
 
 ### Claude Desktop
+
+The short way: download the [`.mcpb` extension](https://github.com/thenavidm/vimeo-mcp-cli/releases/latest)
+from the latest release and double-click it. It carries its own dependencies,
+so there is no config file to edit and nothing to install first. Claude Desktop asks for your Vimeo personal access token.
+
+The long way, if you would rather edit the config yourself:
 
 | Platform | Config path |
 |---|---|
@@ -140,7 +190,7 @@ Add `--scope user` to make it available in every project rather than just this o
   "mcpServers": {
     "vimeo": {
       "command": "npx",
-      "args": ["-y", "@thenavidm/vimeo-mcp@latest"],
+      "args": ["-y", "@thenavidm/vimeo-mcp-cli@latest"],
       "env": { "VIMEO_PAT": "your_token_here" }
     }
   }
@@ -159,7 +209,7 @@ claude.ai runs connectors from Anthropic's cloud, not from your machine, so it
 needs a public HTTPS URL rather than a local command.
 
 ```bash
-npx -y @thenavidm/vimeo-mcp@latest --http --port 8000
+npx -y @thenavidm/vimeo-mcp-cli@latest --http --port 8000
 ```
 
 Host that behind a public HTTPS URL, set `VIMEO_HTTP_TOKEN` to a secret of your
@@ -187,7 +237,7 @@ Codex CLI reads `~/.codex/config.toml`:
 ```toml
 [mcp_servers.vimeo]
 command = "npx"
-args = ["-y", "@thenavidm/vimeo-mcp@latest"]
+args = ["-y", "@thenavidm/vimeo-mcp-cli@latest"]
 
 [mcp_servers.vimeo.env]
 VIMEO_PAT = "your_token_here"
@@ -202,10 +252,15 @@ Gemini CLI reads `~/.gemini/settings.json` under the key `mcpServers`.
 Any stdio MCP client takes the same three things: the command `npx`, the args,
 and the env block.
 
+**To disconnect,** remove the server from your MCP client's config, then delete
+the token in your app's Authentication section at developer.vimeo.com. The
+second step matters: removing the config stops this server using it, revoking it
+stops anything using it.
+
 ## 5. Check it worked 🩺
 
 ```bash
-VIMEO_PAT=your_token npx -y @thenavidm/vimeo-mcp@latest doctor
+VIMEO_PAT=your_token npx -y @thenavidm/vimeo-mcp-cli@latest doctor
 ```
 
 It prints the account, the plan, every scope the token holds, and names any tool
@@ -432,7 +487,8 @@ Nothing else is transmitted anywhere.
 
 ## 12. Troubleshooting 🔧
 
-Run `doctor` first. It catches most of this.
+Run `doctor` first. It catches most of this. Personal access tokens do not
+expire on a timer: they stop when revoked, or when their app is deleted.
 
 | Symptom | Cause |
 |---|---|
@@ -453,6 +509,20 @@ Run `doctor` first. It catches most of this.
 An MCP server is a standard way to give an AI assistant real access to a tool,
 so it can act rather than guess. You install it once, your assistant gains the tools, and it
 works in Claude, Cursor, ChatGPT and anything else that speaks MCP.
+
+</details>
+
+<details>
+<summary><b>What is the CLI?</b></summary>
+
+`vimeo-cli` is the same program as the MCP server, run as commands. AI agents that run commands, like Claude Code, Codex and OpenCode, use it on their own, and you can type the same commands in a terminal, a script or a cron job. Every tool is a command with dashes, so `list_videos` runs as `vimeo-cli list-videos`.
+
+</details>
+
+<details>
+<summary><b>Should I use the MCP server or the CLI?</b></summary>
+
+Use the MCP server in an app with no terminal, like Claude Desktop's chat. Use the CLI anywhere commands run: an agent like Claude Code, Codex or OpenCode, a script or a cron job. The MCP server sends its full tool list to the model on every turn, and the CLI costs nothing until it runs.
 
 </details>
 
@@ -554,25 +624,6 @@ each.
 
 </details>
 
-<details>
-<summary><b>What happens when my token expires?</b></summary>
-
-Vimeo personal access tokens do not expire on a timer. They stop working when
-you revoke them, or when the app they belong to is deleted. If calls suddenly
-fail with an authentication error, run `doctor`.
-
-</details>
-
-<details>
-<summary><b>How do I disconnect it?</b></summary>
-
-Remove the server from your MCP client's config, then delete the token in your
-app's Authentication section at developer.vimeo.com. The second step matters:
-removing the config stops this server using it, revoking it stops anything
-using it.
-
-</details>
-
 ## 14. What changed 📋
 
 Every release is in [CHANGELOG.md](./CHANGELOG.md), newest first.
@@ -580,7 +631,7 @@ Every release is in [CHANGELOG.md](./CHANGELOG.md), newest first.
 ## Questions
 
 Run into a problem or have a question?
-[Open an issue](https://github.com/thenavidm/vimeo-mcp/issues) and I will help.
+[Open an issue](https://github.com/thenavidm/vimeo-mcp-cli/issues) and I will help.
 
 ## About the author
 
@@ -588,9 +639,9 @@ Navid Moazzez is a leading AI business strategist, and the host of the AI Creato
 
 **Links**
 
-- Personal website: [navid.me](https://navid.me?utm_source=github&utm_medium=referral&utm_campaign=vimeo-mcp&utm_content=readme)
-- Link in bio: [navid.bio](https://navid.bio?utm_source=github&utm_medium=referral&utm_campaign=vimeo-mcp&utm_content=readme)
-- Navid Media: [navid.media](https://navid.media?utm_source=github&utm_medium=referral&utm_campaign=vimeo-mcp&utm_content=readme)
+- Personal website: [navid.me](https://navid.me?utm_source=github&utm_medium=referral&utm_campaign=vimeo-mcp-cli&utm_content=readme)
+- Link in bio: [navid.bio](https://navid.bio?utm_source=github&utm_medium=referral&utm_campaign=vimeo-mcp-cli&utm_content=readme)
+- Navid Media: [navid.media](https://navid.media?utm_source=github&utm_medium=referral&utm_campaign=vimeo-mcp-cli&utm_content=readme)
 - YouTube: [@thenavidm](https://youtube.com/@thenavidm?sub_confirmation=1) and [@thenavidai](https://youtube.com/@thenavidai?sub_confirmation=1)
 - X: [@thenavidm](https://x.com/thenavidm)
 - Instagram: [@thenavidm](https://instagram.com/thenavidm)
@@ -613,4 +664,4 @@ Not affiliated with, endorsed by, or connected to Vimeo.com, Inc. Vimeo is a tra
 
 ---
 
-© 2026 [NM Media](https://navid.media?utm_source=github&utm_medium=referral&utm_campaign=vimeo-mcp&utm_content=readme). Made with ❤️ by [Navid Moazzez](https://navid.me?utm_source=github&utm_medium=referral&utm_campaign=vimeo-mcp&utm_content=readme).
+© 2026 [NM Media](https://navid.media?utm_source=github&utm_medium=referral&utm_campaign=vimeo-mcp-cli&utm_content=readme). Made with ❤️ by [Navid Moazzez](https://navid.me?utm_source=github&utm_medium=referral&utm_campaign=vimeo-mcp-cli&utm_content=readme).

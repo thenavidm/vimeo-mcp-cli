@@ -1,0 +1,68 @@
+{
+  "manifest_version": "0.2",
+  "name": "vimeo",
+  "display_name": "Vimeo",
+  "version": "1.1.0",
+  "description": "Vimeo MCP server and CLI for Claude Code, Codex and AI agents. 43 tools for transcripts, bulk folder filing, showcases, chapters, captions, tags, privacy and embed presets.",
+  "long_description": "Connects Claude to your Vimeo library: transcripts, bulk folder filing, showcases, chapters, captions, tags, privacy and embed presets.\n\nIt needs a personal access token from your app at developer.vimeo.com/apps, with the scopes for what you want to change. Deleting videos or folders refuses to run without an explicit confirmation, and Read only removes every write.",
+  "author": {
+    "name": "Navid Moazzez",
+    "url": "https://navid.me"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thenavidm/vimeo-mcp-cli"
+  },
+  "homepage": "https://github.com/thenavidm/vimeo-mcp-cli",
+  "documentation": "https://github.com/thenavidm/vimeo-mcp-cli#readme",
+  "support": "https://github.com/thenavidm/vimeo-mcp-cli/issues",
+  "license": "MIT",
+  "keywords": [
+    "vimeo",
+    "video",
+    "transcripts",
+    "captions",
+    "mcp"
+  ],
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/server/index.js"
+      ],
+      "env": {
+        "VIMEO_PAT": "${user_config.token}",
+        "VIMEO_READ_ONLY": "${user_config.read_only}"
+      }
+    }
+  },
+  "user_config": {
+    "token": {
+      "type": "string",
+      "title": "Vimeo personal access token",
+      "description": "From your app's Authentication section at developer.vimeo.com/apps.",
+      "sensitive": true,
+      "required": true
+    },
+    "read_only": {
+      "type": "boolean",
+      "title": "Read only",
+      "description": "Hide every tool that can change or delete a video, folder or showcase.",
+      "default": false,
+      "required": false
+    }
+  },
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
+    "runtimes": {
+      "node": ">=20"
+    }
+  }
+}

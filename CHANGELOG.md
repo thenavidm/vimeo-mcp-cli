@@ -15,6 +15,8 @@
 
 **A Claude Desktop extension**, attached to each release, asking for the token.
 
+**The context cost is measured in Claude Code**: every tool loaded, Claude Code's default tool search, and the CLI's `SKILL.md`, each from 2 real runs. The old figure counted the tool list at 4 characters a token.
+
 ## 1.0.3
 
 Finishes the American English pass. The previous commit changed five words and

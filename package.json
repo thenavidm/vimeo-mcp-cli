@@ -1,12 +1,13 @@
 {
   "name": "@thenavidm/vimeo-mcp-cli",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Vimeo MCP server and CLI for Claude Code, Codex and AI agents. 43 tools for transcripts, bulk folder filing, showcases, chapters, captions, tags, privacy and embed presets.",
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
     "vimeo-mcp": "dist/index.js",
-    "vimeo-cli": "dist/index.js"
+    "vimeo-cli": "dist/index.js",
+    "vimeo-mcp-cli": "dist/npx.js"
   },
   "engines": {
     "node": ">=20"

@@ -7,6 +7,10 @@
 | Node | >= 20 | 2026-09-01 |
 | Vimeo API | 3.4 | 2026-09-01 |
 
+## 1.1.1, 2026-10-04
+
+- **`npx -y @thenavidm/vimeo-mcp-cli` starts the MCP server whatever order npm keeps.** npx starts whichever binary the npm registry lists first when they share one file, and the registry does not keep the published order. For this package that happened to be the server; for 23 others it was the CLI. A third binary named after the package, on its own file, now always starts the server, and npx picks it by name.
+
 ## 1.1.0
 
 **A CLI.** `vimeo-cli` runs every tool as a shell command. It builds the same server the MCP binary runs and calls it through the SDK's in-memory transport, so the two surfaces cannot drift. Exit codes follow the house contract: 2 usage or a refused write, 3 not found, 4 a rejected token or a missing scope, 5 API, 7 rate limited, 10 no token.

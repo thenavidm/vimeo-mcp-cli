@@ -19,7 +19,7 @@ import { normalizeVideoId, slimShowcase, slimVideo } from "../format/videos.js";
 import { json, SHOWCASE_FIELDS, VIDEO_FIELDS, type ToolContext } from "./types.js";
 
 export function registerShowcaseTools(ctx: ToolContext): void {
-  const { server, client, guard } = ctx;
+  const { server, client } = ctx;
 
   server.tool(
     "list_showcases",
@@ -90,7 +90,6 @@ export function registerShowcaseTools(ctx: ToolContext): void {
     },
     annotationsFor("write"),
     async ({ name, description, privacy, password, sort }) => {
-      guard.check("create_showcase", "write", undefined, `create showcase "${name}"`);
       const body: Record<string, unknown> = { name, privacy, sort };
       if (description) body.description = description;
       if (password) body.password = password;
@@ -120,7 +119,6 @@ export function registerShowcaseTools(ctx: ToolContext): void {
     },
     annotationsFor("write", { idempotent: true }),
     async ({ showcase_id, ...fields }) => {
-      guard.check("update_showcase", "write", undefined, `update showcase ${showcase_id}`);
       const body = Object.fromEntries(
         Object.entries(fields).filter(([, v]) => v !== undefined),
       );
@@ -142,19 +140,9 @@ export function registerShowcaseTools(ctx: ToolContext): void {
     "Delete a showcase. The videos in it are not deleted, they stay in your library, but the showcase's curated order and branding are gone. Needs the delete scope. Requires confirm: true.",
     {
       showcase_id: z.string().describe("Showcase id."),
-      confirm: z
-        .boolean()
-        .default(false)
-        .describe("Deleting a showcase cannot be undone. Set true to proceed."),
     },
     annotationsFor("destructive"),
-    async ({ showcase_id, confirm }) => {
-      guard.check(
-        "delete_showcase",
-        "destructive",
-        confirm,
-        `delete showcase ${showcase_id}, keeping its videos`,
-      );
+    async ({ showcase_id }) => {
       await client.request("DELETE", `/me/albums/${showcase_id}`, {
         scope: "delete",
         tool: "delete_showcase",
@@ -173,12 +161,6 @@ export function registerShowcaseTools(ctx: ToolContext): void {
     annotationsFor("write", { idempotent: true }),
     async ({ showcase_id, video_id }) => {
       const id = normalizeVideoId(video_id);
-      guard.check(
-        "add_video_to_showcase",
-        "write",
-        undefined,
-        `add video ${id} to showcase ${showcase_id}`,
-      );
       await client.request("PUT", `/me/albums/${showcase_id}/videos/${id}`, {
         scope: "edit",
         tool: "add_video_to_showcase",
@@ -197,12 +179,6 @@ export function registerShowcaseTools(ctx: ToolContext): void {
     annotationsFor("write", { idempotent: true }),
     async ({ showcase_id, video_id }) => {
       const id = normalizeVideoId(video_id);
-      guard.check(
-        "remove_video_from_showcase",
-        "write",
-        undefined,
-        `remove video ${id} from showcase ${showcase_id}`,
-      );
       await client.request("DELETE", `/me/albums/${showcase_id}/videos/${id}`, {
         scope: "edit",
         tool: "remove_video_from_showcase",

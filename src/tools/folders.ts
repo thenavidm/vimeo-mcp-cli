@@ -23,7 +23,7 @@ function toVideoUris(ids: string[]): string {
 }
 
 export function registerFolderTools(ctx: ToolContext): void {
-  const { server, client, guard } = ctx;
+  const { server, client } = ctx;
 
   server.tool(
     "list_folders",
@@ -85,7 +85,6 @@ export function registerFolderTools(ctx: ToolContext): void {
     { name: z.string().min(1).describe("Folder name.") },
     annotationsFor("write"),
     async ({ name }) => {
-      guard.check("create_folder", "write", undefined, `create folder "${name}"`);
       const raw = await client.request("POST", "/me/projects", {
         body: { name },
         params: { fields: FOLDER_FIELDS },
@@ -105,7 +104,6 @@ export function registerFolderTools(ctx: ToolContext): void {
     },
     annotationsFor("write", { idempotent: true }),
     async ({ folder_id, name }) => {
-      guard.check("update_folder", "write", undefined, `rename folder ${folder_id} to "${name}"`);
       const raw = await client.request("PATCH", `/me/projects/${folder_id}`, {
         body: { name },
         params: { fields: FOLDER_FIELDS },
@@ -127,17 +125,12 @@ export function registerFolderTools(ctx: ToolContext): void {
         .describe(
           "Also permanently delete every video in the folder. Off by default. This cannot be undone.",
         ),
-      confirm: z
-        .boolean()
-        .default(false)
-        .describe("Deleting a folder cannot be undone. Set true to proceed."),
     },
     annotationsFor("destructive"),
-    async ({ folder_id, delete_videos_too, confirm }) => {
+    async ({ folder_id, delete_videos_too }) => {
       const summary = delete_videos_too
         ? `delete folder ${folder_id} AND permanently delete every video inside it`
         : `delete folder ${folder_id}, keeping its videos`;
-      guard.check("delete_folder", "destructive", confirm, summary);
       await client.request("DELETE", `/me/projects/${folder_id}`, {
         params: { should_delete_clips: delete_videos_too ? "true" : "false" },
         scope: "delete",
@@ -160,12 +153,6 @@ export function registerFolderTools(ctx: ToolContext): void {
     },
     annotationsFor("write", { idempotent: true }),
     async ({ folder_id, video_ids }) => {
-      guard.check(
-        "add_videos_to_folder",
-        "write",
-        undefined,
-        `move ${video_ids.length} video(s) into folder ${folder_id}`,
-      );
       await client.request("PUT", `/me/projects/${folder_id}/videos`, {
         params: { uris: toVideoUris(video_ids) },
         scope: "interact",
@@ -187,31 +174,12 @@ export function registerFolderTools(ctx: ToolContext): void {
         .describe(
           "Permanently delete these videos instead of just unfiling them. Off by default and cannot be undone.",
         ),
-      confirm: z
-        .boolean()
-        .default(false)
-        .describe("Only needed when delete_videos_too is true."),
     },
     annotationsFor("write", { idempotent: true }),
-    async ({ folder_id, video_ids, delete_videos_too, confirm }) => {
-      // Unfiling is reversible and is not gated. Destroying is, and routes
-      // through the destructive path so read-only and the audit log see it.
-      if (delete_videos_too) {
-        guard.check(
-          "remove_videos_from_folder",
-          "destructive",
-          confirm,
-          `permanently delete ${video_ids.length} video(s) from folder ${folder_id}`,
-        );
-      } else {
-        guard.check(
-          "remove_videos_from_folder",
-          "write",
-          undefined,
-          `unfile ${video_ids.length} video(s) from folder ${folder_id}`,
-        );
-      }
-
+    async ({ folder_id, video_ids, delete_videos_too }) => {
+      // Unfiling is reversible and is not gated. Destroying is: tools/kit.ts
+      // gives this call the destructive risk when delete_videos_too is set, so
+      // Slipway's guard asks for confirmation and the audit log sees it.
       await client.request("DELETE", `/me/projects/${folder_id}/videos`, {
         params: {
           uris: toVideoUris(video_ids),

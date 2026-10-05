@@ -31,7 +31,7 @@ function slimChapter(raw: RawChapter): Record<string, unknown> {
 }
 
 export function registerChapterTools(ctx: ToolContext): void {
-  const { server, client, guard } = ctx;
+  const { server, client } = ctx;
 
   server.tool(
     "list_chapters",
@@ -67,12 +67,6 @@ export function registerChapterTools(ctx: ToolContext): void {
     annotationsFor("write"),
     async ({ video_id, timecode_seconds, title }) => {
       const id = normalizeVideoId(video_id);
-      guard.check(
-        "add_chapter",
-        "write",
-        undefined,
-        `add chapter "${title}" at ${humanDuration(timecode_seconds)} on video ${id}`,
-      );
       const raw = await client.request("POST", `/videos/${id}/chapters`, {
         body: { timecode: timecode_seconds, title },
         scope: "edit",
@@ -94,7 +88,6 @@ export function registerChapterTools(ctx: ToolContext): void {
     annotationsFor("write", { idempotent: true }),
     async ({ video_id, chapter_id, title, timecode_seconds }) => {
       const id = normalizeVideoId(video_id);
-      guard.check("update_chapter", "write", undefined, `update chapter ${chapter_id} on video ${id}`);
 
       const body: Record<string, unknown> = {};
       if (title !== undefined) body.title = title;
@@ -118,17 +111,10 @@ export function registerChapterTools(ctx: ToolContext): void {
     {
       video_id: z.string().describe("Video id."),
       chapter_id: z.string().describe("Chapter id."),
-      confirm: z.boolean().default(false).describe("Set true to proceed."),
     },
     annotationsFor("destructive"),
-    async ({ video_id, chapter_id, confirm }) => {
+    async ({ video_id, chapter_id }) => {
       const id = normalizeVideoId(video_id);
-      guard.check(
-        "delete_chapter",
-        "destructive",
-        confirm,
-        `delete chapter ${chapter_id} on video ${id}`,
-      );
       await client.request("DELETE", `/videos/${id}/chapters/${chapter_id}`, {
         scope: "delete",
         tool: "delete_chapter",

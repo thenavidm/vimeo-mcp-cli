@@ -2,10 +2,10 @@
 # Build and run vimeo-mcp from source, for people who would rather not use npx.
 set -eu
 
-command -v node >/dev/null 2>&1 || { echo "Node 20 or newer is required."; exit 1; }
+command -v node >/dev/null 2>&1 || { echo "Node 22 or newer is required."; exit 1; }
 
 MAJOR=$(node -p "process.versions.node.split('.')[0]")
-[ "$MAJOR" -ge 20 ] || { echo "Node 20 or newer is required. Found $(node -v)."; exit 1; }
+[ "$MAJOR" -ge 22 ] || { echo "Node 22 or newer is required. Found $(node -v)."; exit 1; }
 
 npm install
 npm run build

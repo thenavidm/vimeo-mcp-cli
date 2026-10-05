@@ -18,12 +18,9 @@ function config(overrides: Partial<Config> = {}): Config {
     token: "test-token",
     baseUrl: "https://api.example.test",
     apiVersion: "3.4",
-    readOnly: false,
-    allowDestructive: true,
     requestTimeoutMs: 5000,
     minRequestIntervalMs: 0,
     maxRetries: 0,
-    auditPath: undefined,
     ...overrides,
   };
 }

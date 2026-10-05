@@ -13,7 +13,7 @@ import { normalizeVideoId, slimVideo } from "../format/videos.js";
 import { json, VIDEO_FIELDS, VIDEO_FIELDS_FULL, type ToolContext } from "./types.js";
 
 export function registerVideoTools(ctx: ToolContext): void {
-  const { server, client, guard } = ctx;
+  const { server, client } = ctx;
 
   server.tool(
     "list_videos",
@@ -116,7 +116,6 @@ export function registerVideoTools(ctx: ToolContext): void {
     annotationsFor("write", { idempotent: true }),
     async ({ video_id, name, description, privacy_view, privacy_embed, password }) => {
       const id = normalizeVideoId(video_id);
-      guard.check("update_video", "write", undefined, `update video ${id}`);
 
       const body: Record<string, unknown> = {};
       if (name !== undefined) body.name = name;
@@ -146,17 +145,10 @@ export function registerVideoTools(ctx: ToolContext): void {
     "Permanently delete a video. This removes the source file and breaks every embed of it everywhere, and Vimeo keeps no copy to restore from. Needs the delete scope, which many tokens do not have. Requires confirm: true.",
     {
       video_id: z.string().describe("Video id to delete."),
-      confirm: z
-        .boolean()
-        .default(false)
-        .describe(
-          "Deleting a video cannot be undone and breaks any site embedding it. Set true to proceed.",
-        ),
     },
     annotationsFor("destructive"),
-    async ({ video_id, confirm }) => {
+    async ({ video_id }) => {
       const id = normalizeVideoId(video_id);
-      guard.check("delete_video", "destructive", confirm, `permanently delete video ${id}`);
       await client.request("DELETE", `/videos/${id}`, {
         scope: "delete",
         tool: "delete_video",
@@ -179,7 +171,6 @@ export function registerVideoTools(ctx: ToolContext): void {
     },
     annotationsFor("write"),
     async ({ url, name, description, folder_id, privacy_view }) => {
-      guard.check("upload_video", "write", undefined, `upload a video from ${url}`);
       const body: Record<string, unknown> = {
         upload: { approach: "pull", link: url },
       };
@@ -264,7 +255,6 @@ export function registerVideoTools(ctx: ToolContext): void {
     annotationsFor("write", { idempotent: true }),
     async ({ video_id, time_seconds }) => {
       const id = normalizeVideoId(video_id);
-      guard.check("set_video_thumbnail", "write", undefined, `set thumbnail on video ${id}`);
 
       // Two steps: create the picture resource at a timecode, then mark it
       // active. Skipping the activation leaves the old thumbnail in place and

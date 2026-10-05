@@ -34,6 +34,20 @@ export class WriteBlockedError extends Error {
   }
 }
 
+/**
+ * Vimeo could not be reached, or did not answer in time. Its own class, so an
+ * outage is never mistaken for a mistake in the arguments.
+ */
+export class VimeoUnreachableError extends Error {
+  readonly timedOut: boolean;
+
+  constructor(message: string, timedOut: boolean) {
+    super(message);
+    this.name = "VimeoUnreachableError";
+    this.timedOut = timedOut;
+  }
+}
+
 /** No token configured at all. */
 export class MissingTokenError extends Error {
   constructor() {

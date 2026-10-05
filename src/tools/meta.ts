@@ -21,7 +21,7 @@ import { json, type ToolContext } from "./types.js";
 import { VimeoError } from "../api/errors.js";
 
 export function registerMetaTools(ctx: ToolContext): void {
-  const { server, client, guard } = ctx;
+  const { server, client } = ctx;
 
   server.tool(
     "get_me",
@@ -157,12 +157,6 @@ export function registerMetaTools(ctx: ToolContext): void {
     annotationsFor("write", { idempotent: true }),
     async ({ video_id, tags }) => {
       const id = normalizeVideoId(video_id);
-      guard.check(
-        "set_video_tags",
-        "write",
-        undefined,
-        `replace tags on video ${id} with ${tags.length} tag(s)`,
-      );
       // PUT /videos/{id}/tags replaces the whole set in one call, which is why
       // the tool is named "set" rather than "add".
       const raw = await client.request("PUT", `/videos/${id}/tags`, {
@@ -223,12 +217,6 @@ export function registerMetaTools(ctx: ToolContext): void {
     annotationsFor("write", { idempotent: true }),
     async ({ video_id, domain }) => {
       const id = normalizeVideoId(video_id);
-      guard.check(
-        "allow_embed_domain",
-        "write",
-        undefined,
-        `allow ${domain} to embed video ${id}`,
-      );
       await client.request("PUT", `/videos/${id}/privacy/domains/${domain}`, {
         scope: "edit",
         tool: "allow_embed_domain",
@@ -272,12 +260,6 @@ export function registerMetaTools(ctx: ToolContext): void {
     annotationsFor("write", { idempotent: true }),
     async ({ video_id, preset_id }) => {
       const id = normalizeVideoId(video_id);
-      guard.check(
-        "apply_embed_preset",
-        "write",
-        undefined,
-        `apply preset ${preset_id} to video ${id}`,
-      );
       await client.request("PUT", `/videos/${id}/presets/${preset_id}`, {
         scope: "edit",
         tool: "apply_embed_preset",

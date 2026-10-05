@@ -1,5 +1,5 @@
 /**
- * Decides whether a write is allowed to reach Vimeo.
+ * How much a tool can change on Vimeo.
  *
  * The hazard on this platform is narrower than on a social network but sharper.
  * Deleting a video removes the source file and every embed of it across every
@@ -9,14 +9,11 @@
  * Everything else here is cheap to undo. Moving videos between folders, adding
  * a video to a showcase, editing a title, retagging: all one call back.
  *
- * So the guard sits on the six deletes and nowhere else. Putting `confirm` on a
- * bulk folder move would be worse than useless, because that tool exists to be
- * called in a loop and the model would learn to pass confirm without reading.
+ * So confirmation sits on the deletes and nowhere else. Putting it on a bulk
+ * folder move would be worse than useless, because that tool exists to be
+ * called in a loop and the model would learn to confirm without reading.
+ * Slipway's guard enforces it, from the risk each tool declares here.
  */
-
-import { appendFileSync } from "node:fs";
-import type { Config } from "./config.js";
-import { WriteBlockedError } from "./api/errors.js";
 
 export type Risk =
   /** Reads your data, or public data. */
@@ -25,67 +22,6 @@ export type Risk =
   | "write"
   /** Cannot be undone. */
   | "destructive";
-
-export class WriteGuard {
-  private readonly config: Config;
-
-  constructor(config: Config) {
-    this.config = config;
-  }
-
-  get readOnly(): boolean {
-    return this.config.readOnly;
-  }
-
-  get allowDestructive(): boolean {
-    return this.config.allowDestructive;
-  }
-
-  check(tool: string, risk: Risk, confirm: boolean | undefined, summary: string): void {
-    if (risk === "read") return;
-
-    if (this.config.readOnly) {
-      this.audit(tool, summary, "blocked: read-only");
-      throw new WriteBlockedError(
-        `${tool} is unavailable: this server is running with VIMEO_READ_ONLY=1.`,
-      );
-    }
-
-    if (risk === "destructive") {
-      if (!this.config.allowDestructive) {
-        this.audit(tool, summary, "blocked: destructive disabled");
-        throw new WriteBlockedError(
-          `${tool} is unavailable: this server is running with VIMEO_ALLOW_DESTRUCTIVE=0.`,
-        );
-      }
-      if (confirm !== true) {
-        this.audit(tool, summary, "blocked: no confirm");
-        throw new WriteBlockedError(
-          `${tool} cannot be undone, so it will not run without confirm: true. About to: ${summary}. Call again with confirm: true if that is what was asked for.`,
-        );
-      }
-    }
-
-    this.audit(tool, summary, "allowed");
-  }
-
-  /** Append-only record of every attempted write, when VIMEO_AUDIT_LOG is set. */
-  private audit(tool: string, summary: string, outcome: string): void {
-    if (!this.config.auditPath) return;
-    const line = JSON.stringify({
-      at: new Date().toISOString(),
-      tool,
-      summary,
-      outcome,
-    });
-    try {
-      appendFileSync(this.config.auditPath, `${line}\n`, { mode: 0o600 });
-    } catch {
-      // A failing audit log must never take a successful action down with it.
-      // It is a record, not a control.
-    }
-  }
-}
 
 /**
  * MCP annotations for a risk level.

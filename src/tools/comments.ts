@@ -37,7 +37,7 @@ function slimComment(raw: RawComment): Record<string, unknown> {
 }
 
 export function registerCommentTools(ctx: ToolContext): void {
-  const { server, client, guard } = ctx;
+  const { server, client } = ctx;
 
   server.tool(
     "list_comments",
@@ -70,22 +70,10 @@ export function registerCommentTools(ctx: ToolContext): void {
     {
       video_id: z.string().describe("Video id."),
       text: z.string().min(1).describe("Comment text."),
-      confirm: z
-        .boolean()
-        .default(false)
-        .describe(
-          "A comment is visible to everyone who can see the video as soon as it posts. Set true to proceed.",
-        ),
     },
     annotationsFor("destructive"),
-    async ({ video_id, text, confirm }) => {
+    async ({ video_id, text }) => {
       const id = normalizeVideoId(video_id);
-      guard.check(
-        "add_comment",
-        "destructive",
-        confirm,
-        `post a public comment on video ${id}`,
-      );
       const raw = await client.request("POST", `/videos/${id}/comments`, {
         body: { text },
         scope: "interact",
@@ -106,7 +94,6 @@ export function registerCommentTools(ctx: ToolContext): void {
     annotationsFor("write", { idempotent: true }),
     async ({ video_id, comment_id, text }) => {
       const id = normalizeVideoId(video_id);
-      guard.check("edit_comment", "write", undefined, `edit comment ${comment_id} on video ${id}`);
       const raw = await client.request("PATCH", `/videos/${id}/comments/${comment_id}`, {
         body: { text },
         scope: "edit",
@@ -122,17 +109,10 @@ export function registerCommentTools(ctx: ToolContext): void {
     {
       video_id: z.string().describe("Video id."),
       comment_id: z.string().describe("Comment id."),
-      confirm: z.boolean().default(false).describe("Set true to proceed."),
     },
     annotationsFor("destructive"),
-    async ({ video_id, comment_id, confirm }) => {
+    async ({ video_id, comment_id }) => {
       const id = normalizeVideoId(video_id);
-      guard.check(
-        "delete_comment",
-        "destructive",
-        confirm,
-        `delete comment ${comment_id} on video ${id}`,
-      );
       await client.request("DELETE", `/videos/${id}/comments/${comment_id}`, {
         scope: "delete",
         tool: "delete_comment",

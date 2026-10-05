@@ -69,7 +69,7 @@ export function vttToText(vtt: string): string {
 }
 
 export function registerCaptionTools(ctx: ToolContext): void {
-  const { server, client, guard, config } = ctx;
+  const { server, client, config } = ctx;
 
   server.tool(
     "list_texttracks",
@@ -181,12 +181,6 @@ export function registerCaptionTools(ctx: ToolContext): void {
     annotationsFor("write"),
     async ({ video_id, language, name, vtt, type, active }) => {
       const id = normalizeVideoId(video_id);
-      guard.check(
-        "upload_texttrack",
-        "write",
-        undefined,
-        `add a ${language} ${type} track to video ${id}`,
-      );
 
       // Two steps. Creating the track returns an upload_link, and the VTT body
       // is PUT to that link separately. Skipping the second step leaves an
@@ -238,7 +232,6 @@ export function registerCaptionTools(ctx: ToolContext): void {
     annotationsFor("write", { idempotent: true }),
     async ({ video_id, track_id, name, language, active }) => {
       const id = normalizeVideoId(video_id);
-      guard.check("update_texttrack", "write", undefined, `update caption track ${track_id} on video ${id}`);
 
       const body: Record<string, unknown> = {};
       if (name !== undefined) body.name = name;
@@ -263,17 +256,10 @@ export function registerCaptionTools(ctx: ToolContext): void {
     {
       video_id: z.string().describe("Video id."),
       track_id: z.string().describe("Track id."),
-      confirm: z.boolean().default(false).describe("Set true to proceed."),
     },
     annotationsFor("destructive"),
-    async ({ video_id, track_id, confirm }) => {
+    async ({ video_id, track_id }) => {
       const id = normalizeVideoId(video_id);
-      guard.check(
-        "delete_texttrack",
-        "destructive",
-        confirm,
-        `delete caption track ${track_id} on video ${id}`,
-      );
       await client.request("DELETE", `/videos/${id}/texttracks/${track_id}`, {
         scope: "delete",
         tool: "delete_texttrack",

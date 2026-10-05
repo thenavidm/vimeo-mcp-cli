@@ -50,9 +50,10 @@ Nothing else is written: there is no cache, no session file and no database.
   how a curated list gets wiped by accident.
 - **No account deletion, plan changes or billing.** Not a gap: this server does
   not touch the account itself.
-- **HTTP transport binds to `127.0.0.1` by default.** Set `VIMEO_HTTP_HOST` to
-  change that, and set `VIMEO_HTTP_TOKEN` if you do, because anything that can
-  reach the port can use the Vimeo token behind it.
+- **HTTP transport binds to `127.0.0.1` by default.** Another `VIMEO_HTTP_HOST`
+  needs `VIMEO_HTTP_TOKEN` as well, or the server refuses to listen, because
+  anything that can reach the port can use the Vimeo token behind it. A page
+  from another site is refused unless `VIMEO_HTTP_ALLOWED_ORIGINS` lists it.
 
 ## Prompt injection
 

@@ -49,6 +49,7 @@ The CLI describes itself, so nothing here lists every tool and goes stale:
 
 ```bash
 vimeo-cli                    # every command, one line each
+vimeo-cli which <words>      # the command for a task
 vimeo-cli <command> --help   # arguments, types, which are required
 vimeo-cli schema <command>   # the exact JSON Schema an MCP client receives
 ```
@@ -67,9 +68,10 @@ vimeo-cli search-videos --query webinar --agent
 | Code | Meaning |
 |---|---|
 | 0 | Success |
-| 2 | Usage: a missing or wrong argument, an unknown command, or a write refused for want of `--confirm` |
+| 1 | Unexpected error |
+| 2 | Usage: a missing or wrong argument, an unknown command, a request Vimeo rejected, or a write refused for want of `--confirm` |
 | 3 | Not found |
-| 4 | Authentication: a credential was rejected or has expired |
+| 4 | Authentication: the token was rejected, or lacks the scope a tool needs |
 | 5 | Upstream failure |
 | 7 | Rate limited, wait and retry |
 | 10 | Nothing configured yet |
@@ -137,10 +139,12 @@ for that video. Same fix as the delete scope: a new token.
 
 ## Get confirm right
 
-These refuse to run without `confirm: true`:
+These refuse to run until confirmed: `--confirm` in a shell, and over MCP a
+person's approval in the client, or `confirm: true` where the client cannot ask:
 
 `delete_video`, `delete_folder`, `delete_showcase`, `delete_chapter`,
-`delete_texttrack`, `delete_comment`, `add_comment`
+`delete_texttrack`, `delete_comment`, `add_comment`, and
+`remove_videos_from_folder` when `delete_videos_too` is set
 
 Set it only after the user has asked for that specific action. A refusal is not
 a signal to retry with `confirm: true` added; it is a signal to check that

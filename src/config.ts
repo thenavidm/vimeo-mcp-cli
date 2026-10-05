@@ -40,48 +40,36 @@ export type Config = {
    * working integration breaks without a deploy.
    */
   apiVersion: string;
-  readOnly: boolean;
-  allowDestructive: boolean;
   requestTimeoutMs: number;
   minRequestIntervalMs: number;
   maxRetries: number;
-  auditPath: string | undefined;
 };
 
-function envFlag(name: string, fallback: boolean): boolean {
-  const raw = process.env[name];
-  if (raw === undefined || raw === "") return fallback;
-  return !["0", "false", "no", "off"].includes(raw.toLowerCase());
-}
-
-function envInt(name: string, fallback: number): number {
-  const raw = process.env[name];
+function envInt(env: NodeJS.ProcessEnv, name: string, fallback: number): number {
+  const raw = env[name];
   if (!raw) return fallback;
   const n = Number.parseInt(raw, 10);
   return Number.isFinite(n) && n >= 0 ? n : fallback;
 }
 
-export function loadConfig(): Config {
+export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   // VIMEO_PAT first: it is what Vimeo calls the token on the page where you
   // generate one, so it is the name a user reaches for. The other two are
   // accepted because existing configs on this machine already use them.
   const token =
-    process.env.VIMEO_PAT ??
-    process.env.VIMEO_ACCESS_TOKEN ??
-    process.env.VIMEO_TOKEN ??
+    env.VIMEO_PAT ??
+    env.VIMEO_ACCESS_TOKEN ??
+    env.VIMEO_TOKEN ??
     undefined;
 
   return {
     token: token && token.trim() !== "" ? token.trim() : undefined,
-    baseUrl: process.env.VIMEO_API_BASE ?? "https://api.vimeo.com",
-    apiVersion: process.env.VIMEO_API_VERSION ?? "3.4",
-    readOnly: envFlag("VIMEO_READ_ONLY", false),
-    allowDestructive: envFlag("VIMEO_ALLOW_DESTRUCTIVE", true),
-    requestTimeoutMs: envInt("VIMEO_REQUEST_TIMEOUT_MS", 30_000),
+    baseUrl: env.VIMEO_API_BASE ?? "https://api.vimeo.com",
+    apiVersion: env.VIMEO_API_VERSION ?? "3.4",
+    requestTimeoutMs: envInt(env, "VIMEO_REQUEST_TIMEOUT_MS", 30_000),
     // Vimeo's documented ceiling is generous, but uploads and bulk folder calls
     // arrive in tight loops. A small floor keeps a batch from tripping a 429.
-    minRequestIntervalMs: envInt("VIMEO_MIN_REQUEST_INTERVAL_MS", 100),
-    maxRetries: envInt("VIMEO_MAX_RETRIES", 2),
-    auditPath: process.env.VIMEO_AUDIT_LOG || undefined,
+    minRequestIntervalMs: envInt(env, "VIMEO_MIN_REQUEST_INTERVAL_MS", 100),
+    maxRetries: envInt(env, "VIMEO_MAX_RETRIES", 2),
   };
 }

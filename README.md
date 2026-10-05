@@ -21,7 +21,7 @@ There are 43 tools, and the bulk folder operations are the point of them. Vimeo
 moves videos between folders one at a time, so refiling a back catalog of
 hundreds is hundreds of drags. Here it is one call that takes up to 100 videos.
 
-Built by [Navid Moazzez](https://navid.me?utm_source=github&utm_medium=referral&utm_campaign=vimeo-mcp-cli&utm_content=readme).
+Built by [Navid Moazzez](https://navid.me?utm_source=github&utm_medium=referral&utm_campaign=vimeo-mcp-cli&utm_content=readme). Built on [Slipway](https://github.com/thenavidm/slipway), which turns one definition of each tool into the MCP server and the CLI.
 
 <img src="https://cdn.navid.media/repos/vimeo-mcp.gif?v=1" alt="Claude Code using the Vimeo MCP server" width="520">
 
@@ -38,10 +38,11 @@ vimeo-cli                                          # every command, one line eac
 vimeo-cli get-me                                   # which account and plan the token reaches
 vimeo-cli search-videos --query "webinar"
 vimeo-cli get-video --video-id 123456789 --json
+vimeo-cli which file videos into a folder          # find the command for a task
 vimeo-cli <command> --help                         # what any command takes
 ```
 
-`--confirm` is the shell spelling of the confirmation deleting needs. `--json` gives JSON, `--compact` puts it on one line, `--select` keeps only the fields you name, and `--agent` turns on all of it for a script. Exit codes are 0 ok, 2 usage or a refused write, 3 not found, 4 a rejected token or a missing scope, 5 API, 7 rate limited and 10 no token, so a script branches on the number.
+`--confirm` is the shell spelling of the confirmation deleting needs. `--json` gives JSON, `--compact` puts it on one line, `--select` keeps only the fields you name, and `--agent` turns on all of it for a script. Exit codes are 0 ok, 1 unexpected, 2 usage or a refused write, 3 not found, 4 a rejected token or a missing scope, 5 API, 7 rate limited and 10 no token, so a script branches on the number.
 
 `vimeo-cli schema <command>` prints the exact JSON Schema an MCP client
 receives for that tool.
@@ -68,10 +69,10 @@ installs on a double click. Section 4 has every other client.
 | 4 | [Connect your client](#4-connect-your-client-) | Every client, copy and paste |
 | 5 | [Check it worked](#5-check-it-worked-) | `doctor` |
 | 6 | [What it costs to have connected](#6-what-it-costs-to-have-connected) | Measured in Claude Code, and how to spend less |
-| 7 | [Tools](#7-tools-) | All 43 |
-| 8 | [Writing safely](#8-writing-safely-) | What is guarded, what is not |
+| 7 | [Tools](#7-tools-%EF%B8%8F) | All 43 |
+| 8 | [Writing safely](#8-writing-safely-%EF%B8%8F) | What is guarded, what is not |
 | 9 | [How Vimeo actually behaves](#9-how-vimeo-actually-behaves-) | The things that surprise people |
-| 10 | [This and Vimeo's own connector](#10-this-and-vimeos-own-connector-) | Which one you want, and when |
+| 10 | [This and Vimeo's own connector](#10-this-and-vimeos-own-connector-%EF%B8%8F) | Which one you want, and when |
 | 11 | [Your data](#11-your-data-) | What is stored, and where |
 | 12 | [Troubleshooting](#12-troubleshooting-) | Symptom to cause |
 | 13 | [FAQ](#13-faq-) | Start here if you are new |
@@ -96,7 +97,7 @@ library of hundreds of videos is one request rather than hundreds of drags.
 
 ## 2. Quick install ⚡
 
-You need Node 20 or newer, and nothing else.
+You need Node 22 or newer, and nothing else.
 
 ```bash
 npx -y @thenavidm/vimeo-mcp-cli --version
@@ -212,9 +213,12 @@ needs a public HTTPS URL rather than a local command.
 npx -y @thenavidm/vimeo-mcp-cli@latest --http --port 8000
 ```
 
-Host that behind a public HTTPS URL, set `VIMEO_HTTP_TOKEN` to a secret of your
-choosing, then in claude.ai go to Customize, Connectors, +, Add custom
-connector, and paste the URL.
+Host that behind a public HTTPS URL, then in claude.ai go to Customize,
+Connectors, +, Add custom connector, and paste the URL. It binds to `127.0.0.1`,
+which is all a tunnel or a proxy on the same machine needs. To accept
+connections from outside the machine, set `VIMEO_HTTP_HOST=0.0.0.0` together
+with `VIMEO_HTTP_TOKEN`, a secret every request must send: without one, the
+server refuses to listen beyond this machine.
 
 ### Cursor
 
@@ -263,9 +267,10 @@ stops anything using it.
 VIMEO_PAT=your_token npx -y @thenavidm/vimeo-mcp-cli@latest doctor
 ```
 
-It prints the account, the plan, every scope the token holds, and names any tool
-that a missing scope disables. Both of the things that actually go wrong show up
-here.
+It prints the account, the plan and the token's scopes, names any tool that a
+missing scope disables, and tests whether the plan has analytics. Both of the
+things that actually go wrong show up here. It exits 0 when everything works, 1
+when a scope is missing or the token is rejected, and 10 when no token is set.
 
 ## 6. What it costs to have connected
 
@@ -274,10 +279,10 @@ difference is when the model pays for them. Measured in Claude Code:
 
 | | MCP server | CLI |
 |---|---|---|
-| Every message, with every tool loaded | 10,700 tokens | nothing |
+| Every message, with every tool loaded | 9,200 tokens | nothing |
 | Every message, Claude Code's default | 1,200 tokens | nothing |
-| When Vimeo comes up | nothing more, or the tools it picks | 3,000 tokens for `SKILL.md`, once |
-| 20 messages with Vimeo in 1, every tool loaded | 213,000 tokens | 3,000 tokens |
+| When Vimeo comes up | nothing more, or the tools it picks | 3,100 tokens for `SKILL.md`, once |
+| 20 messages with Vimeo in 1, every tool loaded | 184,000 tokens | 3,100 tokens |
 
 Claude Code's [tool search](https://code.claude.com/docs/en/mcp#scale-with-mcp-tool-search)
 is on by default: it sends only the tool names and the server instructions,
@@ -290,11 +295,30 @@ To spend less, turn the server off when you are not using it, which in Claude
 Code is the `/mcp` panel. `VIMEO_READ_ONLY=1` takes the 26 write tools off the list, leaving 17.
 Or install the CLI and add the server on the days it earns its place.
 
-Measured on 2026-09-27 with Claude Code 2.1.257 on Claude Opus 5: one
-short prompt with and without the server connected, once with
-`ENABLE_TOOL_SEARCH=false` and once with the default, the difference read
-from the API's own usage figures. `SKILL.md` was measured the same way. Other
-apps and models count tokens a little differently.
+Measured on 2026-10-05 against 1.1.1, with Claude Code 2.1.286 on Claude Opus
+5.5 (one short prompt with and without the server connected, once with
+`ENABLE_TOOL_SEARCH=false` and once with the default, the difference read from
+the API's own usage figures; `SKILL.md` the same way) and Codex 0.159.3 on
+gpt-6.1-sol:
+
+| Cost | 1.1.1 | 2.0.0 |
+| --- | --- | --- |
+| Claude Code, every tool loaded, every message | 10,668 | 9,156 |
+| Claude Code's default, tool search, every message | 1,154 | 1,156 |
+| `SKILL.md`, read once | 2,999 | 3,120 |
+| Codex over the CLI, one task, median of five | 127,534 | 82,465 |
+| Codex over MCP, the same task, median of five | 48,700 | 48,629 |
+
+The task was "find the command that moves several videos into a folder, and
+the flags it requires". Every tool loaded costs less because each tool no
+longer repeats `$schema`, `additionalProperties` and an `execution` block. Over
+the CLI, every 1.1.1 run read the general help twice and the command list
+before the command's help, five requests that each carry the conversation so
+far, and every 2.0.0 run asked `which` and read the help: three. Tool search
+costs the same within the spread of each version's own rounds. `SKILL.md` costs
+121 more because it lists `which` and exit code 1 and says how approval works
+over MCP. Other apps and models count tokens a little differently, and
+tool-list characters divided by four are not API usage.
 
 ## 7. Tools 🛠️
 
@@ -383,27 +407,39 @@ remain under `VIMEO_READ_ONLY=1`.
 
 Writes work by default. Organizing a library is the point of the tool.
 
-Seven tools refuse to run without `confirm: true`: the six deletes, and
-`add_comment`, because a comment is visible to everyone who can see the video
-the moment it posts. Nothing else is gated, because moving a video between
-folders or editing a title is one call to undo, and confirming everything
-teaches a model to confirm reflexively.
+Seven tools need confirming every time: the six deletes, and `add_comment`,
+because a comment is visible to everyone who can see the video the moment it
+posts. Nothing else is gated, because moving a video between folders or editing
+a title is one call to undo, and confirming everything teaches a model to
+confirm reflexively.
+
+Over MCP a person approves each of those calls. Claude Code (2.1.246 and later)
+shows its own prompt, and a client that can show forms asks with an approval
+form whose one box starts unticked. Where a client can do neither, the model's
+`confirm: true` still counts, and `VIMEO_CONFIRM=model` makes it enough
+everywhere, for an agent with no person to ask. In a terminal the flag is
+`--confirm`, which `--agent` never adds.
 
 Two flags deserve their own mention. `delete_videos_too` on `delete_folder` and
 `remove_videos_from_folder` destroys videos rather than unfiling them. Both
-default to false and both route through the confirm path when set.
+default to false. `delete_folder` always needs confirming, and
+`remove_videos_from_folder` only when the flag is set.
 
 | Setting | Effect |
 |---|---|
-| `VIMEO_READ_ONLY=1` | Write tools are not registered at all. 17 tools remain |
+| `VIMEO_READ_ONLY=1` | Write tools are left off the list, and refused if called anyway. 17 tools remain |
 | `VIMEO_ALLOW_DESTRUCTIVE=0` | Keeps ordinary writes, blocks deletes and comments |
-| `VIMEO_AUDIT_LOG=<path>` | One JSON line per attempted write, allowed and blocked |
+| `VIMEO_AUDIT_LOG=<path>` | One JSON line per attempted write, allowed and blocked, with who approved it, then whether it was done or failed |
 
 | | `readOnlyHint` | `destructiveHint` | `idempotentHint` |
 |---|---|---|---|
 | Reads | true | false | true |
 | Reversible writes | false | false | true |
 | Deletes and comments | false | true | false |
+| `remove_videos_from_folder` | false | true | true |
+
+`remove_videos_from_folder` tells clients the most it can do, destroy videos,
+even though unfiling them is a reversible write.
 
 Comment text is written by other people and can contain instructions aimed at
 whatever reads it. Every comment comes back wrapped and labeled as
@@ -486,11 +522,47 @@ There is no backend. This server runs on your machine and talks to
 
 It stores nothing: there is no session file, no cache and no database. The only file it ever
 writes is the audit log, and only when you set `VIMEO_AUDIT_LOG` to a path. That
-file holds a timestamp, a tool name and a one-line summary per attempted write,
-and it is created with `0600` permissions.
+file holds, per attempted write, a timestamp, the tool, its risk, a one-line
+summary and what happened, who approved it when it needed approval, and a line
+when it finished. It is created with `0600` permissions.
 
 Your token lives wherever you put it, which is your MCP client's config file.
 Nothing else is transmitted anywhere.
+
+### Settings
+
+The program reads the environment directly. It does not load `.env` files.
+
+**Credentials**
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `VIMEO_PAT` | Empty | Personal access token from https://developer.vimeo.com/apps |
+| `VIMEO_ACCESS_TOKEN`, `VIMEO_TOKEN` | Empty | Other names for `VIMEO_PAT`, read when it is unset |
+
+**Safety**
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `VIMEO_READ_ONLY` | Off | `1` or `true` hides every write |
+| `VIMEO_ALLOW_DESTRUCTIVE` | On | `0` or `false` blocks the deletes and comments |
+| `VIMEO_CONFIRM` | `human` | `model` lets `confirm: true` alone approve over MCP, for an agent with no person to ask |
+| `VIMEO_AUDIT_LOG` | Empty | Append guard decisions to this local path |
+
+**Tuning**
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `VIMEO_REQUEST_TIMEOUT_MS` | 30000 | Per-request deadline |
+| `VIMEO_MIN_REQUEST_INTERVAL_MS` | 100 | Spacing between requests |
+| `VIMEO_MAX_RETRIES` | 2 | Retries on 429, server errors and timeouts |
+| `VIMEO_API_VERSION` | 3.4 | The Vimeo API version every request pins |
+| `VIMEO_API_BASE` | https://api.vimeo.com | Vimeo's API root |
+| `VIMEO_SURFACE` | `full` | `search` lists three tools that find, describe and run the rest |
+| `VIMEO_TOOL_TIMEOUT_MS` | None | Give up on any tool after this long |
+| `VIMEO_HTTP_PORT`, `VIMEO_HTTP_HOST`, `VIMEO_HTTP_TOKEN` | 8787, 127.0.0.1, none | For `--http`; any host but 127.0.0.1 needs the bearer token |
+| `VIMEO_HTTP_ALLOWED_ORIGINS` | None | Comma-separated browser origins allowed to call `--http`; a page from any other site is refused |
+| `VIMEO_DEBUG` | `0` | `1` prints debug lines on stderr |
 
 ## 12. Troubleshooting 🔧
 
@@ -574,15 +646,16 @@ something the Vimeo API allows.
 <details>
 <summary><b>Can it delete something by accident?</b></summary>
 
-Deleting is guarded twice. Six tools cannot run without `confirm: true`:
+Deleting is guarded twice. Six tools need confirming before they run:
 `delete_video`, `delete_folder`, `delete_showcase`, `delete_chapter`,
-`delete_texttrack` and `delete_comment`. On top of that, most tokens do not hold
-the `delete` scope, so those tools fail outright unless you deliberately ticked
-that box.
+`delete_texttrack` and `delete_comment`. Over MCP a person approves each one in
+the client's own prompt or form; in a terminal it takes `--confirm`. On top of
+that, most tokens do not hold the `delete` scope, so those tools fail outright
+unless you deliberately ticked that box.
 
 The one to watch is `delete_videos_too`, an option on `delete_folder` and
 `remove_videos_from_folder` that destroys videos instead of unfiling them. It
-defaults to false and needs a confirm when set. If you want no risk at all, run
+defaults to false and needs confirming when set. If you want no risk at all, run
 with `VIMEO_READ_ONLY=1`.
 
 </details>
@@ -660,7 +733,8 @@ If this is useful, star the repo and come say hi on [X](https://x.com/thenavidm)
 
 | Package | License | Why |
 |---|---|---|
-| [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/typescript-sdk) | MIT | The MCP protocol implementation |
+| [Slipway](https://github.com/thenavidm/slipway) | Apache-2.0 | The MCP server and the CLI from one definition of each tool |
+| [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk) | Apache-2.0 | The MCP protocol and its transports, through Slipway |
 | [zod](https://github.com/colinhacks/zod) | MIT | Tool input schemas and validation |
 
 ## License

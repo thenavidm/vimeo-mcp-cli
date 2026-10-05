@@ -1,19 +1,33 @@
-import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { z } from "zod";
 import type { VimeoClient } from "../api/client.js";
 import type { Config } from "../config.js";
-import type { WriteGuard } from "../safety.js";
+
+/** A tool's answer: its JSON, as the text a client reads. */
+export type JsonResult = { content: Array<{ type: "text"; text: string }> };
+
+/**
+ * What each tool module registers its tools with. It has the shape of the MCP
+ * SDK's `server.tool()`, which these modules were written against;
+ * tools/kit.ts records each call and turns it into a Slipway tool.
+ */
+export type ToolRegistrar = {
+  tool<S extends z.ZodRawShape>(
+    name: string,
+    description: string,
+    shape: S,
+    annotations: Record<string, boolean>,
+    handler: (args: z.infer<z.ZodObject<S>>) => Promise<JsonResult>,
+  ): void;
+};
 
 export type ToolContext = {
-  server: McpServer;
+  server: ToolRegistrar;
   client: VimeoClient;
-  guard: WriteGuard;
   config: Config;
 };
 
 /** Standard JSON tool result. */
-export function json(data: unknown): {
-  content: Array<{ type: "text"; text: string }>;
-} {
+export function json(data: unknown): JsonResult {
   return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
 }
 

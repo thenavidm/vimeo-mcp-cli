@@ -22,7 +22,7 @@
  */
 
 import type { Config, VimeoScope } from "../config.js";
-import { describeFailure, MissingScopeError, MissingTokenError, VimeoError } from "./errors.js";
+import { describeFailure, MissingScopeError, MissingTokenError, VimeoError, VimeoUnreachableError } from "./errors.js";
 
 export type RequestOptions = {
   params?: Record<string, unknown>;
@@ -174,18 +174,19 @@ export class VimeoClient {
         clearTimeout(timer);
         if (error instanceof VimeoError) throw error;
 
-        lastError = error as Error;
-        if ((error as Error).name === "AbortError") {
-          lastError = new Error(
-            `Vimeo did not respond within ${this.config.requestTimeoutMs}ms. Raise VIMEO_REQUEST_TIMEOUT_MS if this is a large upload.`,
-          );
-        }
+        lastError =
+          (error as Error).name === "AbortError"
+            ? new VimeoUnreachableError(
+                `Vimeo did not respond within ${this.config.requestTimeoutMs}ms. Raise VIMEO_REQUEST_TIMEOUT_MS if this is a large upload.`,
+                true,
+              )
+            : new VimeoUnreachableError((error as Error).message, false);
         if (attempt >= this.config.maxRetries) break;
         await sleep(Math.min(1000 * 2 ** attempt, 4000));
       }
     }
 
-    throw lastError ?? new Error("The request to Vimeo failed for an unknown reason.");
+    throw lastError ?? new VimeoUnreachableError("The request to Vimeo failed for an unknown reason.", false);
   }
 
   /** Space requests out so a bulk loop does not trip the rate limit. */

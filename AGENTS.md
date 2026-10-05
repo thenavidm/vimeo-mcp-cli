@@ -27,14 +27,21 @@ printf '%s\n%s\n%s\n' \
 **Tools are grouped by what they reach**, not by API endpoint. A reader asks
 "what can this see", never "which URL does this call".
 
-**Writes are on.** Only the six deletes and `add_comment` require
-`confirm: true`. Do not add a confirm to a reversible write: it teaches a model
-to pass confirm without reading, which defeats the ones that matter.
+**Built on Slipway.** `src/app.ts` describes the server; Slipway builds the MCP
+server, the CLI, `doctor`, the write guard and the exit codes from it. Each tool
+module registers its tools with `server.tool(...)` as it did on the MCP SDK, and
+`src/tools/kit.ts` records those calls and turns them into Slipway tools, with
+each write's risk from its annotations and its audit summary in 1.x's words.
 
-**Read-only is enforced at registration**, in `readOnlyFacade` in `server.ts`.
-It reads the `readOnlyHint` annotation every tool already passes, so a new tool
-is filtered correctly without touching that function. Do not add an `if` around
-individual writes.
+**Writes are on.** Only the six deletes, `add_comment`, and
+`remove_videos_from_folder` with `delete_videos_too` need confirming. Do not
+add a confirm to a reversible write: it teaches a model to pass confirm without
+reading, which defeats the ones that matter.
+
+**Read-only and the guard are Slipway's.** A tool declares its risk through the
+`annotationsFor` it already passes, and Slipway hides the writes under
+`VIMEO_READ_ONLY`, refuses an unconfirmed delete and writes the audit log. Do
+not check any of that inside a handler.
 
 **Always request specific leaf fields.** Vimeo expands nested objects in full,
 so `fields=parent_folder` returns about two kilobytes to learn a folder name.

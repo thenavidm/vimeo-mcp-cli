@@ -2,10 +2,30 @@
 
 | Component | Version | Checked |
 |---|---|---|
-| `@modelcontextprotocol/sdk` | ^1.30.0 | 2026-09-01 |
-| `zod` | ^3.23.8 | 2026-09-01 |
-| Node | >= 20 | 2026-09-01 |
+| `@thenavidm/slipway` | 0.1.20 | 2026-10-05 |
+| MCP TypeScript SDK, through Slipway | 2.3.0 | 2026-10-05 |
+| `zod` | 4.6.5 | 2026-10-05 |
+| Node | >= 22 | 2026-10-05 |
 | Vimeo API | 3.4 | 2026-09-01 |
+
+## 2.0.0, 2026-10-05
+
+Built on [Slipway](https://github.com/thenavidm/slipway) 0.1.20. The 43 tools keep their names and arguments, and every difference below was measured against 1.1.1, the last version on npm, before release.
+
+- **`which <words>` finds a command**, and `agent-context` describes every command, flag and setting as JSON. In Codex 0.159.3, finding the command that moves several videos into a folder and its flags took a median of 82,465 input tokens over the CLI instead of 127,534 (five runs each). Every 1.1.1 run took five commands, reading the general help twice and then the command list before the command's help; every 2.0.0 run asked `which` and read the command's help, three commands.
+- **A person approves each confirmed call over MCP.** The six deletes and `add_comment` still need confirmation, and `remove_videos_from_folder` when `delete_videos_too` is set. Claude Code (2.1.246 and later) shows its own prompt, and a client that can show forms asks with an approval form whose one box starts unticked. Approvals are signed, bound to the exact call and work once. Where a client can do neither, the model's `confirm: true` still counts, and `VIMEO_CONFIRM=model` makes it enough everywhere. A refusal reads as 1.1.1's did, word for word: "delete_video cannot be undone, so it will not run without confirm: true. About to: permanently delete video …". `add_comment`'s now says it posts publicly under your account, since a comment can be deleted afterwards. The audit log records who approved each call.
+- **`remove_videos_from_folder` tells clients it can destroy videos.** Its annotations said it was a reversible write, which is true until `delete_videos_too` is set; clients now see `destructiveHint`, and it still asks for confirmation only when the flag is set.
+- **Vimeo's status picks the exit code.** A request Vimeo rejects (400 or 422) exits 2 instead of 5, and a removed resource (410) 3 instead of 5. 401 and 403 still exit 4, 404 3, 429 7, a server error 5, a scope the token lacks 4, and no token 10. A timeout exits 5, and 1 now means an unexpected error.
+- **Smaller answers over MCP.** A result is compact JSON, where 1.1.1 indented it, so the same answer costs fewer tokens. A failure is JSON too, with Slipway's `code`, Vimeo's `status` and its `error_code`, where 1.1.1 sent the message alone.
+- **A smaller tool list.** Each tool no longer repeats `$schema`, `additionalProperties` and an `execution` block saying it runs no background tasks, so the list is 8,210 o200k tokens instead of 8,577, and Claude Code 2.1.286 spends 9,156 tokens a message on it with every tool loaded instead of 10,668. Each tool has a title, the first clause of its description, where 1.1.1 gave clients the name.
+- **Less to install and start.** npx installs 4 packages instead of 94: Slipway brings the MCP SDK's 2.x server package, which carries no web framework. The entry turns on Node's compile cache, and the server spends 160 ms of CPU before its first answer where 1.1.1 spent 193, and answers in 115 ms of wall time instead of 125 (median of 21 runs, taking turns on one Mac).
+- **`install <client>`** adds the server to Claude Code, Codex, Claude Desktop, Cursor, VS Code or Gemini CLI in each one's own format.
+- **`doctor` checks what it checked**: the token, its scopes and the tools a missing one disables, and whether the plan has analytics. It exits 1 on a missing scope as before, and 10 with no token where it exited 1.
+- **Docs.** README section 6 has the costs measured against 1.1.1, where it had 2026-09-27's; a settings table lists every variable; the contents links to sections 7, 8 and 10 work on GitHub, which keeps an emoji's variation selector in the anchor; and `SKILL.md` lists `which` and exit code 1.
+
+### Upgrading
+
+Node 22 or later is required; 1.1.1 ran on 20. Over MCP, expect an approval prompt or form before a delete or a comment; a headless agent that should run them with `confirm: true` alone needs `VIMEO_CONFIRM=model`. A script that read exit 5 as a rejected request should read 2, and as a removed resource 3. An error in the terminal is one JSON object with `error`, Slipway's `code` (`usage`, `refused`, `auth`, `not_found`, `rate_limited`, `timeout`, `api`, `not_configured`) and often a `hint`, plus Vimeo's `status` when it answered; 1.1.1 printed `error` alone. Over MCP, an error is that JSON, where 1.1.1 sent its message as plain text, and a result is compact JSON rather than indented. With `VIMEO_READ_ONLY=1`, a client that calls a hidden tool gets "tool not found", and that call is not in the audit log; the CLI still names the setting. The audit log's lines gain `surface`, `risk` and `confirmed_by`, and each allowed call is followed by a `done` or `failed` line. `--http` now refuses to listen beyond this machine without `VIMEO_HTTP_TOKEN`, and refuses a page from another site unless `VIMEO_HTTP_ALLOWED_ORIGINS` lists it. Each confirmed tool's `confirm` argument now reads "Set true only when the user asked for exactly this action." A missing argument's error is 14 tokens longer, for its code and a hint, and `SKILL.md` 121 tokens longer in Claude Code, because it lists `which` and exit code 1, says how approval works over MCP and names the flag that makes `remove_videos_from_folder` need confirming.
 
 ## 1.1.1, 2026-10-04
 
